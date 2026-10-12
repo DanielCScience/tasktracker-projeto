@@ -29,7 +29,8 @@ conforme definido no algoritmo do planejamento lógico (`docs/planejamento_logic
 
 ## Tecnologias
 
-- Python 3.8 ou superior (somente biblioteca padrão, sem dependências externas)
+- Python 3.8 ou superior (somente biblioteca padrão, sem dependências externas;
+  `tkinter` apenas para a interface gráfica opcional)
 - Git e GitHub para versionamento
 
 ## Estrutura do repositório
@@ -56,6 +57,19 @@ python3 src/main.py
 ```
 
 No Windows, use `python src/main.py` caso `python3` não esteja disponível.
+
+### Interface gráfica (opcional)
+
+Além do menu no terminal, há uma janela simples com botões (**Cadastrar tarefa**,
+**Visualizar tarefas** e **Sair**), que usa as mesmas regras de validação:
+
+```bash
+python3 src/main.py --gui
+```
+
+Ela usa o `tkinter`, que já acompanha o Python no Windows e no macOS. No Linux
+(Debian/Ubuntu), instale com `sudo apt install python3-tk`. Sem `--gui`, o programa
+abre normalmente a interface de linha de comando.
 
 ## Exemplo de uso
 
