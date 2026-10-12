@@ -6,24 +6,34 @@ Desenvolvimento de Sistemas** (Fase 2 — Entrega Intermediária).
 
 ## Descrição funcional
 
-O TaskTracker oferece um menu contínuo no terminal com três opções:
+O TaskTracker oferece um menu contínuo no terminal:
 
 1. **Cadastrar nova tarefa**: solicita título, descrição, prioridade e data limite.
-2. **Visualizar tarefas cadastradas**: lista todas as tarefas com seus campos.
-3. **Sair da aplicação**.
+2. **Visualizar tarefas pendentes**: lista apenas as tarefas ainda não concluídas.
+3. **Visualizar tarefas concluídas**: lista apenas as tarefas já concluídas.
+4. **Concluir tarefa**: marca uma tarefa pendente como concluída.
+5. **Excluir tarefa**: remove uma tarefa (pendente ou concluída), com confirmação.
+6. **Sair da aplicação**.
 
 ### Campos e regras de negócio
 
 | Campo       | Regra                                                                                     |
 |-------------|-------------------------------------------------------------------------------------------|
+| Nº          | Gerado automaticamente. Identifica a tarefa ao concluir ou excluir.                       |
 | Título      | Obrigatório. Entradas vazias ou só com espaços são rejeitadas e o prompt é repetido.      |
 | Descrição   | Texto livre.                                                                              |
 | Prioridade  | Aceita somente `Alta`, `Média` (ou `Media`) e `Baixa`, sem diferenciar maiúsculas/minúsculas. Outras entradas geram erro e repetem o prompt. |
 | Data limite | Texto livre ou `DD/MM/AAAA`.                                                              |
-| Status      | Definido automaticamente como `Pendente` no cadastro.                                     |
+| Status      | `Pendente` no cadastro; passa a `Concluída` quando a tarefa é concluída.                  |
 
-Se nenhuma tarefa foi cadastrada, a listagem exibe a mensagem "Nenhuma tarefa pendente no momento.",
-conforme definido no algoritmo do planejamento lógico (`docs/planejamento_logico.pdf`).
+Regras adicionais:
+
+- Não é possível concluir nem excluir uma tarefa que não existe: o sistema exibe uma
+  mensagem de erro e volta ao menu.
+- Uma tarefa já concluída não pode ser concluída novamente.
+- Se não houver tarefas pendentes, a listagem exibe "Nenhuma tarefa pendente no momento.",
+  conforme definido no algoritmo do planejamento lógico (`docs/planejamento_logico.pdf`).
+  Para as concluídas, a mensagem é "Nenhuma tarefa concluída no momento."
 
 > Nesta fase as tarefas ficam apenas em memória, enquanto o programa está aberto.
 
@@ -61,7 +71,8 @@ No Windows, use `python src/main.py` caso `python3` não esteja disponível.
 ### Interface gráfica (opcional)
 
 Além do menu no terminal, há uma janela simples com botões (**Cadastrar tarefa**,
-**Visualizar tarefas** e **Sair**), que usa as mesmas regras de validação:
+**Concluir selecionada**, **Excluir selecionada** e **Sair**) e duas listas, uma de tarefas
+pendentes e outra de tarefas concluídas. Ela usa as mesmas regras de validação:
 
 ```bash
 python3 src/main.py --gui
@@ -76,20 +87,40 @@ abre normalmente a interface de linha de comando.
 ```text
 ===== TASKTRACKER =====
 1. Cadastrar nova tarefa
-2. Visualizar tarefas cadastradas
-3. Sair da aplicação
+2. Visualizar tarefas pendentes
+3. Visualizar tarefas concluídas
+4. Concluir tarefa
+5. Excluir tarefa
+6. Sair da aplicação
 Escolha uma opção: 1
 
 Título: 
-Erro: o título é obrigatório e não pode ficar vazio.
+Erro: O título é obrigatório e não pode ficar vazio.
 Título: Estudar Git
 Descrição: Revisar commit, branch e push
 Prioridade (Alta/Média/Baixa): urgente
-Erro: prioridade inválida. Use Alta, Média ou Baixa.
+Erro: Prioridade inválida. Use Alta, Média ou Baixa.
 Prioridade (Alta/Média/Baixa): Alta
 Data limite (DD/MM/AAAA): 20/10/2026
 
 Tarefa cadastrada com sucesso!
+```
+
+Concluindo a tarefa criada acima (opção 4):
+
+```text
+===== TAREFAS PENDENTES =====
+
+Tarefa 1
+  Título:      Estudar Git
+  Descrição:   Revisar commit, branch e push
+  Prioridade:  Alta
+  Data limite: 20/10/2026
+  Status:      Pendente
+
+Número da tarefa a concluir (Enter para cancelar): 1
+
+Tarefa concluída com sucesso!
 ```
 
 ## Autor
