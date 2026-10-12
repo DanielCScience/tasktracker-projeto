@@ -1,11 +1,8 @@
-"""TaskTracker: gerenciador de tarefas (Fase 2).
+"""TaskTracker: gerenciador de tarefas em linha de comando (Fase 2).
 
 Uso:
-    python3 src/main.py          # interface de linha de comando (padrão)
-    python3 src/main.py --gui    # janela simples com botões (opcional)
+    python3 src/main.py
 """
-
-import sys
 
 STATUS_PENDENTE = "Pendente"
 STATUS_CONCLUIDA = "Concluída"
@@ -32,7 +29,7 @@ TITULO_LISTA = {
 
 
 # ---------------------------------------------------------------------------
-# Regras de negócio (compartilhadas pelo terminal e pela janela)
+# Regras de negócio
 # ---------------------------------------------------------------------------
 
 def titulo_valido(titulo):
@@ -107,7 +104,7 @@ def formatar_tarefa(tarefa):
 
 
 # ---------------------------------------------------------------------------
-# Interface de linha de comando (padrão)
+# Interface de linha de comando
 # ---------------------------------------------------------------------------
 
 def exibir_menu():
@@ -239,204 +236,5 @@ def main():
             print("\nOpção inválida. Digite um número de 1 a 6.")
 
 
-# ---------------------------------------------------------------------------
-# Interface gráfica simples (opcional: python3 src/main.py --gui)
-# ---------------------------------------------------------------------------
-
-COLUNAS_TABELA = (
-    ("id", "Nº", 40),
-    ("titulo", "Título", 150),
-    ("descricao", "Descrição", 190),
-    ("prioridade", "Prioridade", 80),
-    ("data_limite", "Data limite", 90),
-    ("status", "Status", 80),
-)
-
-
-def iniciar_interface_grafica():
-    try:
-        import tkinter as tk
-        from tkinter import messagebox, ttk
-    except ImportError:
-        print("O tkinter não está instalado neste Python.")
-        print("No Linux (Debian/Ubuntu): sudo apt install python3-tk")
-        print("Enquanto isso, use o modo terminal: python3 src/main.py")
-        return
-
-    tarefas = []
-
-    janela = tk.Tk()
-    janela.title("TaskTracker")
-    janela.resizable(False, False)
-
-    quadro = ttk.Frame(janela, padding=12)
-    quadro.grid(row=0, column=0)
-
-    ttk.Label(quadro, text="Título:").grid(row=0, column=0, sticky="w", pady=3)
-    campo_titulo = ttk.Entry(quadro, width=60)
-    campo_titulo.grid(row=0, column=1, columnspan=3, sticky="we", pady=3)
-
-    ttk.Label(quadro, text="Descrição:").grid(row=1, column=0, sticky="w", pady=3)
-    campo_descricao = ttk.Entry(quadro, width=60)
-    campo_descricao.grid(row=1, column=1, columnspan=3, sticky="we", pady=3)
-
-    ttk.Label(quadro, text="Prioridade:").grid(row=2, column=0, sticky="w", pady=3)
-    campo_prioridade = ttk.Combobox(quadro, values=["Alta", "Média", "Baixa"], width=57)
-    campo_prioridade.grid(row=2, column=1, columnspan=3, sticky="we", pady=3)
-
-    ttk.Label(quadro, text="Data limite:").grid(row=3, column=0, sticky="w", pady=3)
-    campo_data = ttk.Entry(quadro, width=60)
-    campo_data.grid(row=3, column=1, columnspan=3, sticky="we", pady=3)
-
-    def criar_tabela(linha, rotulo):
-        ttk.Label(quadro, text=rotulo).grid(
-            row=linha, column=0, columnspan=4, sticky="w", pady=(12, 2)
-        )
-        tabela = ttk.Treeview(
-            quadro,
-            columns=[chave for chave, _, _ in COLUNAS_TABELA],
-            show="headings",
-            height=5,
-            selectmode="browse",
-        )
-        for chave, titulo, largura in COLUNAS_TABELA:
-            tabela.heading(chave, text=titulo)
-            tabela.column(chave, width=largura, anchor="w")
-        tabela.grid(row=linha + 1, column=0, columnspan=4, sticky="we")
-        aviso = ttk.Label(quadro, text="")
-        aviso.grid(row=linha + 2, column=0, columnspan=4, sticky="w")
-        return tabela, aviso
-
-    tabela_pendentes, aviso_pendentes = criar_tabela(5, "Tarefas pendentes")
-    tabela_concluidas, aviso_concluidas = criar_tabela(8, "Tarefas concluídas")
-
-    def preencher(tabela, aviso, status):
-        tabela.delete(*tabela.get_children())
-        selecionadas = filtrar_por_status(tarefas, status)
-        for tarefa in selecionadas:
-            tabela.insert(
-                "",
-                tk.END,
-                iid=str(tarefa["id"]),
-                values=(
-                    tarefa["id"],
-                    tarefa["titulo"],
-                    tarefa["descricao"],
-                    tarefa["prioridade"],
-                    tarefa["data_limite"],
-                    tarefa["status"],
-                ),
-            )
-        aviso.configure(text="" if selecionadas else MENSAGEM_LISTA_VAZIA[status])
-
-    def atualizar_listas():
-        preencher(tabela_pendentes, aviso_pendentes, STATUS_PENDENTE)
-        preencher(tabela_concluidas, aviso_concluidas, STATUS_CONCLUIDA)
-
-    def tarefa_selecionada(*tabelas):
-        for tabela in tabelas:
-            selecao = tabela.selection()
-            if selecao:
-                return int(selecao[0])
-        return None
-
-    def ao_selecionar(tabela, outra):
-        """Mantém apenas uma linha selecionada entre as duas listas."""
-        def tratar(_evento=None):
-            if tabela.selection():
-                outra_selecao = outra.selection()
-                if outra_selecao:
-                    outra.selection_remove(*outra_selecao)
-        return tratar
-
-    tabela_pendentes.bind(
-        "<<TreeviewSelect>>", ao_selecionar(tabela_pendentes, tabela_concluidas)
-    )
-    tabela_concluidas.bind(
-        "<<TreeviewSelect>>", ao_selecionar(tabela_concluidas, tabela_pendentes)
-    )
-
-    def cadastrar():
-        titulo = campo_titulo.get()
-        if not titulo_valido(titulo):
-            messagebox.showerror("Erro", MENSAGEM_TITULO_VAZIO)
-            campo_titulo.focus_set()
-            return
-
-        prioridade = normalizar_prioridade(campo_prioridade.get())
-        if prioridade is None:
-            messagebox.showerror("Erro", MENSAGEM_PRIORIDADE_INVALIDA)
-            campo_prioridade.focus_set()
-            return
-
-        tarefas.append(
-            criar_tarefa(
-                proximo_id(tarefas),
-                titulo.strip(),
-                campo_descricao.get().strip(),
-                prioridade,
-                campo_data.get().strip(),
-            )
-        )
-        for campo in (campo_titulo, campo_descricao, campo_data):
-            campo.delete(0, tk.END)
-        campo_prioridade.set("")
-        atualizar_listas()
-        messagebox.showinfo("Sucesso", MENSAGEM_SUCESSO)
-
-    def concluir():
-        id_tarefa = tarefa_selecionada(tabela_pendentes)
-        if id_tarefa is None:
-            messagebox.showerror(
-                "Erro", "Selecione uma tarefa pendente na lista para concluir."
-            )
-            return
-        sucesso, mensagem = concluir_tarefa(tarefas, id_tarefa)
-        atualizar_listas()
-        if sucesso:
-            messagebox.showinfo("Sucesso", mensagem)
-        else:
-            messagebox.showerror("Erro", mensagem)
-
-    def excluir():
-        id_tarefa = tarefa_selecionada(tabela_pendentes, tabela_concluidas)
-        if id_tarefa is None:
-            messagebox.showerror("Erro", "Selecione uma tarefa em uma das listas para excluir.")
-            return
-        tarefa = buscar_tarefa(tarefas, id_tarefa)
-        if tarefa is None:
-            messagebox.showerror("Erro", MENSAGEM_NAO_ENCONTRADA.format(id_tarefa))
-            atualizar_listas()
-            return
-        if not messagebox.askyesno(
-            "Confirmar exclusão", f'Excluir a tarefa "{tarefa["titulo"]}"?'
-        ):
-            return
-        _, mensagem = excluir_tarefa(tarefas, id_tarefa)
-        atualizar_listas()
-        messagebox.showinfo("Sucesso", mensagem)
-
-    barra_botoes = ttk.Frame(quadro)
-    barra_botoes.grid(row=4, column=0, columnspan=4, sticky="w", pady=10)
-    ttk.Button(barra_botoes, text="Cadastrar tarefa", command=cadastrar).grid(
-        row=0, column=0, padx=(0, 8)
-    )
-    ttk.Button(barra_botoes, text="Concluir selecionada", command=concluir).grid(
-        row=0, column=1, padx=(0, 8)
-    )
-    ttk.Button(barra_botoes, text="Excluir selecionada", command=excluir).grid(
-        row=0, column=2, padx=(0, 8)
-    )
-    ttk.Button(barra_botoes, text="Sair", command=janela.destroy).grid(
-        row=0, column=3
-    )
-
-    atualizar_listas()
-    janela.mainloop()
-
-
 if __name__ == "__main__":
-    if "--gui" in sys.argv[1:]:
-        iniciar_interface_grafica()
-    else:
-        main()
+    main()
